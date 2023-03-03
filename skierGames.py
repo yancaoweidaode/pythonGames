@@ -19,7 +19,7 @@ class SkierClass(pygame.sprite.Sprite):
         self.image = pygame.image.load(skier_images[self.angle])
         self.rect = self.image.get_rect()
         self.rect.center = center
-        speed = [self.angle, 6 - abs(self.angle) * 2]
+        speed = [self.angle, 3 - abs(self.angle)]           # angle用来调整方向，第二个变量才是调整速度
         return speed
 
     def move(self, speed):
@@ -71,66 +71,86 @@ def updateObstacleGroup(map0, map1):
     for ob in map1:  obstacles.add(ob)
     return obstacles
 
+screen = pygame.display.set_mode([640,640])
+skier = SkierClass()
 pygame.init()
 pygame.mixer.init()
 pygame.mixer.music.load("./bg_music/bg_music.mp3")
 pygame.mixer.music.set_volume(0.3)
 pygame.mixer.music.play(-1)
-screen = pygame.display.set_mode([640,640])
 clock = pygame.time.Clock()
-skier = SkierClass()
-speed = [0, 6]
+speed = [0, 3]
 map_position = 0
 points = 0
 map0 = create_map(20, 29)
 map1 = create_map(10, 19)
 activeMap = 0
-
 obstacles = updateObstacleGroup(map0, map1)
-
 font = pygame.font.Font(None, 50)
+score_text = font.render("Score: " +str(points), 1, (0, 0, 0))
+direction = 1
+def game_play():
+    global speed
+    global activeMap
+    global points
+    global map_position
+    global obstacles
+    global map0
+    global map1
+    global activeMap
+    global font
+    global score_text
+    global direction
+    while True:
+        clock.tick(30)
+        # print(direction)
+        # for event in pygame.event.get():
+        #     # if event.type == pygame.QUIT: sys.exit()
+        #     if event.type == pygame.KEYDOWN:                 # 接收来自键盘的数据，在这里可以更改成为分类器的分类结果
+        #         if event.key == pygame.K_LEFT:
+        #             speed = skier.turn(-1)
+        #         elif event.key == pygame.K_RIGHT:
+        #             speed = skier.turn(1)
+            # if event.type == pygame.QUIT: sys.exit()
+        # if event.type == pygame.KEYDOWN:                 # 接收来自键盘的数据，在这里可以更改成为分类器的分类结果
+        if direction == 1:
+            speed = skier.turn(-1)
+        elif direction == 2:
+            speed = skier.turn(1)
+        skier.move(speed)
+        map_position += speed[1]
 
-while True:
-    clock.tick(30)
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT: sys.exit()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                speed = skier.turn(-1)
-            elif event.key == pygame.K_RIGHT:
-                speed = skier.turn(1)
-    skier.move(speed)
-    map_position += speed[1]
+        if map_position >=640 and activeMap == 0:
+            activeMap = 1
+            map0 = create_map(20, 29)
+            obstacles = updateObstacleGroup(map0, map1)
+        if map_position >=1280 and activeMap == 1:
+            activeMap = 0
+            for ob in map0:
+                ob.location[1] = ob.location[1] - 1280
+            map_position = map_position - 1280
+            map1 = create_map(10, 19)
+            obstacles = updateObstacleGroup(map0, map1)
 
-    if map_position >=640 and activeMap == 0:
-        activeMap = 1
-        map0 = create_map(20, 29)
-        obstacles = updateObstacleGroup(map0, map1)
-    if map_position >=1280 and activeMap == 1:
-        activeMap = 0
-        for ob in map0:
-            ob.location[1] = ob.location[1] - 1280
-        map_position = map_position - 1280
-        map1 = create_map(10, 19)
-        obstacles = updateObstacleGroup(map0, map1)
+        for obstacle in obstacles:
+            obstacle.scroll(map_position)
 
-    for obstacle in obstacles:
-        obstacle.scroll(map_position)
+        hit =  pygame.sprite.spritecollide(skier, obstacles, False)
+        if hit:
+            if hit[0].type == "tree" and not hit[0].passed:
+                points = points - 100
+                skier.image = pygame.image.load("./bg_img/skier_crash.png")
+                animate()
+                pygame.time.delay(1000)
+                skier.image = pygame.image.load("./bg_img/skier_down.png")
+                skier.angle = 0
+                speed = [0, 6]
+                hit[0].passed = True
+            elif hit[0].type == "flag" and not hit[0].passed:
+                points += 10
+                obstacles.remove(hit[0])
 
-    hit =  pygame.sprite.spritecollide(skier, obstacles, False)
-    if hit:
-        if hit[0].type == "tree" and not hit[0].passed:
-            points = points - 100
-            skier.image = pygame.image.load("./bg_img/skier_crash.png")
-            animate()
-            pygame.time.delay(1000)
-            skier.image = pygame.image.load("./bg_img/skier_down.png")
-            skier.angle = 0
-            speed = [0, 6]
-            hit[0].passed = True
-        elif hit[0].type == "flag" and not hit[0].passed:
-            points += 10
-            obstacles.remove(hit[0])
+        score_text = font.render("Score: " +str(points), 1, (0, 0, 0))
+        animate()
 
-    score_text = font.render("Score: " +str(points), 1, (0, 0, 0))
-    animate()
+# game_play()
