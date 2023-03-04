@@ -10,8 +10,12 @@ import scipy.io as sio
 import matplotlib.pyplot as plt
 from PIL import Image
 import time
+from cycle_buffer import RingBuffer
+import threading
 
 
+buffer = RingBuffer(10000, 250)     # 可以存储40s的数据
+buffer_lock = threading.Lock()
 def LSL():#线程1用于接受LSL数据
     historylength = 250#横坐标长度
     data = np.zeros((8, historylength), dtype = float)
