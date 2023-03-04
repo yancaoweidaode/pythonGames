@@ -15,8 +15,8 @@ import threading
 
 
 buffer = RingBuffer(10000, 250)     # 可以存储40s的数据
-buffer_lock = threading.Lock()
 def LSL():#线程1用于接受LSL数据
+    global buffer
     historylength = 250#横坐标长度
     data = np.zeros((8, historylength), dtype = float)
     global index
@@ -39,3 +39,6 @@ def LSL():#线程1用于接受LSL数据
             i = i + 1
         else:#采集到1s的数据后进行处理 这里直接保存原始数据
             i = 0
+            buffer.lock.acquire()
+            buffer.append(data)
+            buffer.lock.release()

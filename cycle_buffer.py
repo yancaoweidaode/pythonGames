@@ -9,7 +9,7 @@ class RingBuffer:
         self.begin = 0
         self.end = 0
         self.nums = 1000 / historylength
-        self.lock = threading.Lock
+        self.lock = threading.Lock()
     
     def append(self,x):
         """append an element at the end of the buffer"""
